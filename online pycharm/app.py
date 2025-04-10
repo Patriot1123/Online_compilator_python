@@ -1,16 +1,14 @@
 import os
 import subprocess
-from flask import Flask, render_template, request, jsonify, send_from_directory, redirect, url_for
+from flask import Flask, render_template, request, jsonify, send_from_directory
 from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
-app.config['UPLOAD_FOLDER'] = 'user_files/images'
-app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max upload
+app.config['UPLOAD_FOLDER'] = 'user_files'
 app.secret_key = 'your-secret-key-here'
 
-# Ensure directories exist
-os.makedirs('user_files/projects', exist_ok=True)
-os.makedirs('user_files/images', exist_ok=True)
+# Ensure directory exists
+os.makedirs('user_files', exist_ok=True)
 
 
 @app.route('/')
@@ -21,9 +19,9 @@ def index():
 @app.route('/files')
 def list_files():
     files = []
-    for filename in os.listdir('user_files/projects'):
+    for filename in os.listdir('user_files'):
         if filename.endswith('.py'):
-            filepath = os.path.join('user_files/projects', filename)
+            filepath = os.path.join('user_files', filename)
             with open(filepath, 'r') as f:
                 content = f.read()
             files.append({
@@ -43,7 +41,7 @@ def save_file():
     if not filename.endswith('.py'):
         filename += '.py'
 
-    filepath = os.path.join('user_files/projects', filename)
+    filepath = os.path.join('user_files', filename)
 
     with open(filepath, 'w') as f:
         f.write(data['content'])
@@ -58,7 +56,7 @@ def save_file():
 @app.route('/delete/<filename>', methods=['DELETE'])
 def delete_file(filename):
     filename = secure_filename(filename)
-    filepath = os.path.join('user_files/projects', filename)
+    filepath = os.path.join('user_files', filename)
 
     if os.path.exists(filepath):
         os.remove(filepath)
@@ -114,30 +112,27 @@ def upload_file():
     if file.filename == '':
         return jsonify({'status': 'error', 'message': 'No selected file'}), 400
 
-    if file:
+    if file and file.filename.endswith('.py'):
         filename = secure_filename(file.filename)
         file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+
+        # Read and return file content
+        with open(os.path.join(app.config['UPLOAD_FOLDER'], filename), 'r') as f:
+            content = f.read()
+
         return jsonify({
             'status': 'success',
             'message': 'File uploaded successfully',
-            'filename': filename
+            'filename': filename,
+            'content': content
         })
+    else:
+        return jsonify({'status': 'error', 'message': 'Only .py files allowed'}), 400
 
 
-@app.route('/images')
-def list_images():
-    images = []
-    for filename in os.listdir(app.config['UPLOAD_FOLDER']):
-        images.append({
-            'name': filename,
-            'url': url_for('uploaded_file', filename=filename)
-        })
-    return jsonify(images)
-
-
-@app.route('/uploads/<filename>')
-def uploaded_file(filename):
-    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+@app.route('/download/<filename>')
+def download_file(filename):
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename, as_attachment=True)
 
 
 if __name__ == '__main__':
