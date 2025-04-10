@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Online PyCharm</title>
+    <title>Online Python IDE</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/dracula.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
@@ -13,15 +13,13 @@
         <div class="file-manager">
             <div class="file-actions">
                 <button id="new-file">New File</button>
-                <button id="upload-file">Upload Image</button>
-                <input type="file" id="file-upload" style="display: none;" accept="image/*">
+                <button id="upload-file">Upload .py File</button>
+                <input type="file" id="file-upload" style="display: none;" accept=".py">
+                <button id="download-file">Download</button>
             </div>
             <div class="file-list">
                 <h3>Python Files</h3>
                 <ul id="python-files"></ul>
-
-                <h3>Images</h3>
-                <ul id="image-files"></ul>
             </div>
         </div>
 
@@ -62,7 +60,7 @@
     <!-- Modals -->
     <div id="confirm-modal" class="modal">
         <div class="modal-content">
-            <p>Are you sure you want to delete this file? It will be permanently removed from the server.</p>
+            <p>Are you sure you want to delete this file? It will be permanently removed.</p>
             <div class="modal-actions">
                 <button id="confirm-delete">Delete</button>
                 <button id="cancel-delete">Cancel</button>
@@ -77,8 +75,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/python/python.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/edit/matchbrackets.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/edit/closebrackets.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/edit/trailingspace.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/selection/active-line.min.js"></script>
     <script src="{{ url_for('static', filename='js/script.js') }}"></script>
 </body>
 </html>
