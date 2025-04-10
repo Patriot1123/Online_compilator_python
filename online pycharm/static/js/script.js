@@ -27,7 +27,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 const line = cm.getLine(cursor.line);
                 const prevLine = cm.getLine(cursor.line - 1);
 
-                // Auto-indent based on previous line
                 let indent = '';
                 const prevIndent = prevLine.match(/^\s*/)[0];
 
@@ -49,11 +48,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const deleteBtn = document.getElementById('delete-file');
     const newFileBtn = document.getElementById('new-file');
     const uploadBtn = document.getElementById('upload-file');
+    const downloadBtn = document.getElementById('download-file');
     const fileUpload = document.getElementById('file-upload');
     const outputArea = document.getElementById('output');
     const inputArea = document.getElementById('input-area');
     const pythonFilesList = document.getElementById('python-files');
-    const imageFilesList = document.getElementById('image-files');
     const confirmModal = document.getElementById('confirm-modal');
     const confirmDeleteBtn = document.getElementById('confirm-delete');
     const cancelDeleteBtn = document.getElementById('cancel-delete');
@@ -83,7 +82,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Load files on startup
     loadFiles();
-    loadImages();
 
     // Event listeners
     saveBtn.addEventListener('click', saveFile);
@@ -91,7 +89,8 @@ document.addEventListener('DOMContentLoaded', function() {
     deleteBtn.addEventListener('click', showDeleteConfirmation);
     newFileBtn.addEventListener('click', createNewFile);
     uploadBtn.addEventListener('click', () => fileUpload.click());
-    fileUpload.addEventListener('change', uploadImage);
+    downloadBtn.addEventListener('click', downloadFile);
+    fileUpload.addEventListener('change', uploadPythonFile);
     confirmDeleteBtn.addEventListener('click', deleteFile);
     cancelDeleteBtn.addEventListener('click', () => confirmModal.style.display = 'none');
 
@@ -109,19 +108,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     li.textContent = file.name;
                     li.addEventListener('click', () => loadFile(file));
                     pythonFilesList.appendChild(li);
-                });
-            });
-    }
-
-    function loadImages() {
-        fetch('/images')
-            .then(response => response.json())
-            .then(images => {
-                imageFilesList.innerHTML = '';
-                images.forEach(img => {
-                    const li = document.createElement('li');
-                    li.textContent = img.name;
-                    imageFilesList.appendChild(li);
                 });
             });
     }
@@ -188,7 +174,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 outputArea.style.color = '#d4d4d4';
             }
 
-            // Switch to output tab
             document.querySelector('[data-tab="output"]').click();
         })
         .catch(error => {
@@ -233,7 +218,7 @@ document.addEventListener('DOMContentLoaded', function() {
         updateStats();
     }
 
-    function uploadImage() {
+    function uploadPythonFile() {
         const file = fileUpload.files[0];
         if (!file) return;
 
@@ -246,13 +231,29 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(response => response.json())
         .then(data => {
-            showNotification(data.message, 'success');
-            loadImages();
+            if (data.status === 'success') {
+                showNotification(data.message, 'success');
+                currentFile = data.filename;
+                filenameInput.value = data.filename;
+                editor.setValue(data.content);
+                loadFiles();
+            } else {
+                showNotification(data.message, 'error');
+            }
         })
         .catch(error => {
-            showNotification('Error uploading image', 'error');
+            showNotification('Error uploading file', 'error');
             console.error('Error:', error);
         });
+    }
+
+    function downloadFile() {
+        if (!currentFile) {
+            showNotification('No file selected', 'error');
+            return;
+        }
+
+        window.location.href = `/download/${currentFile}`;
     }
 
     function updateStats() {
@@ -263,7 +264,6 @@ document.addEventListener('DOMContentLoaded', function() {
         lineCount.textContent = lines;
         charCount.textContent = chars;
 
-        // Calculate file size (rough estimate)
         const size = new Blob([content]).size;
         fileSize.textContent = size;
     }
